@@ -19,17 +19,17 @@ class Restclient
      * @var array 
      */
     private $config = array(
-        'port' => NULL,
-        'auth' => FALSE,
-        'auth_type' => 'basic',
+        'port'          => NULL,
+        'auth'          => FALSE,
+        'auth_type'     => 'basic',
         'auth_username' => '',
         'auth_password' => '',
-        'header' => FALSE,
-        'cookie' => FALSE,
-        'timeout' => 30,
-        'result_assoc' => TRUE,
-        'cache' => FALSE,
-        'tts' => 3600
+        'header'        => FALSE,
+        'cookie'        => FALSE,
+        'timeout'       => 30,
+        'result_assoc'  => TRUE,
+        'cache'         => FALSE,
+        'tts'           => 3600
     );
 
     /**
@@ -138,6 +138,18 @@ class Restclient
     {
         return $this->_query('put', $url, $data, $options);
     }
+    
+    /**
+     * Requête PATCH
+     * @param type $url
+     * @param array $data
+     * @param array $options
+     * @return string|boolean
+     */
+    public function patch($url, array $data = array(), array $options = array())
+    {
+        return $this->_query('patch', $url, $data, $options);
+    }
 
     /**
      * Requête DELETE
@@ -237,7 +249,7 @@ class Restclient
      * @param array $options
      * @return string|boolean
      */
-    private function _query($method, $url, array $data, array $options = array())
+    private function _query($method, $url, $data = array(), array $options = array())
     {
         // Initialise la configuration, si elle existe
         $this->initialize($options);
@@ -325,7 +337,7 @@ class Restclient
         }
 
         // Référence du data
-        $this->output_value = & $data;
+        $this->output_value =& $data;
 
         // Encodage des datas
         switch ($method) {
@@ -337,13 +349,10 @@ class Restclient
                 }
                 break;
             case 'put':
-                if (!empty($data)) {
-                    curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
-                }
-                break;
+            case 'patch':
             case 'delete':
                 if (!empty($data)) {
-                    curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
+                    curl_setopt($curl, CURLOPT_POSTFIELDS, (is_array($data)) ? http_build_query($data) : $data);
                 }
                 break;
             case 'get':
