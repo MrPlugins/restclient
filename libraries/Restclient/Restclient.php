@@ -109,7 +109,7 @@ class Restclient
      * @param array $options
      * @return string|boolean
      */
-    public function get($url, array $data = array(), array $options = array())
+    public function get($url, $data = array(), array $options = array())
     {
         $url = "$url?".http_build_query($data);
         return $this->_query('get', $url, $data, $options);
@@ -122,7 +122,7 @@ class Restclient
      * @param array $options
      * @return string|boolean
      */
-    public function post($url, array $data = array(), array $options = array())
+    public function post($url, $data = array(), array $options = array())
     {
         return $this->_query('post', $url, $data, $options);
     }
@@ -134,7 +134,7 @@ class Restclient
      * @param array $options
      * @return string|boolean
      */
-    public function put($url, array $data = array(), array $options = array())
+    public function put($url, $data = array(), array $options = array())
     {
         return $this->_query('put', $url, $data, $options);
     }
@@ -146,7 +146,7 @@ class Restclient
      * @param array $options
      * @return string|boolean
      */
-    public function patch($url, array $data = array(), array $options = array())
+    public function patch($url, $data = array(), array $options = array())
     {
         return $this->_query('patch', $url, $data, $options);
     }
@@ -158,7 +158,7 @@ class Restclient
      * @param array $options
      * @return string|boolean
      */
-    public function delete($url, array $data = array(), array $options = array())
+    public function delete($url, $data = array(), array $options = array())
     {
         return $this->_query('delete', $url, $data, $options);
     }
