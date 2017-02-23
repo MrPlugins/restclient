@@ -274,8 +274,8 @@ class Restclient
             // Si la méthode est de type GET
             if ($method == 'get') {
                 // Si il existe une clé
-                if ($json = $this->CI->cache->get($cache_key)) {
-                    return $json;
+                if ($result = $this->CI->cache->get($cache_key)) {
+                    return $result;
                 }
 
                 // Si la méthode n'est pas de type GET
@@ -374,13 +374,13 @@ class Restclient
         }
 
         // Récupération de l'URL et affichage sur le naviguateur
-        $result = curl_exec($curl);
+        $response = curl_exec($curl);
 
         // Information sur la requete
         $this->info = curl_getinfo($curl);
 
         // Gestion des erreurs
-        if ($result === FALSE) {
+        if ($response === FALSE) {
             $this->errno = curl_errno($curl);
             $this->error = curl_error($curl);
             return FALSE;
@@ -390,10 +390,15 @@ class Restclient
         curl_close($curl);
 
         // Converti les données en JSON
-        $json = json_decode($result, $this->config['result_assoc']);
+        $result = json_decode($response, $this->config['result_assoc']);
+        
+        // Si mal formaté ou autre format
+        if ($result === FALSE) {
+            $result = $response;
+        }
 
         // Référence de la réponse
-        $this->input_value = & $result;
+        $this->input_value = & $response;
 
         // Si le cahche est activé et que la méthode est de type GET 
         if ($this->config['cache'] && $method == 'get') {
@@ -410,11 +415,11 @@ class Restclient
             }
 
             // Sauvegarde les données
-            $this->CI->cache->save($cache_key, $json, $this->config['tts']);
+            $this->CI->cache->save($cache_key, $result, $this->config['tts']);
         }
 
         // Retourne les résultats
-        return $json;
+        return $result;
     }
 
     /**
