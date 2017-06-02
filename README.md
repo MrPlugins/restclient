@@ -4,7 +4,7 @@ REST Full Client for Codeigniter 3
 ## Requirements
 
 - PHP 5.3.x (Composer requirement)
-- CodeIgniter 3.0.x
+- CodeIgniter 3.x.x
 
 ## Installation
 ### Step 1 Installation by Composer
@@ -24,9 +24,9 @@ class Client extends CI_Controller
     public function index()
     {
         $this->load
-            ->add_package_path(APPPATH.'third_party/restclient')
+            ->add_package_path(FCPATH.'vendor/restclient')
             ->library('restclient')
-            ->remove_package_path(APPPATH.'third_party/restclient');
+            ->remove_package_path(FCPATH.'vendor/restclient');
 
         $this->load->helper('url');
 
