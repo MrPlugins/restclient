@@ -10,7 +10,7 @@ class Restclient
 {
     /**
      * Instance de Codeigniter
-     * @var object 
+     * @var object
      */
     private $CI;
 
