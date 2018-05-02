@@ -11,11 +11,11 @@ test-unitary:
     stage: test
     environment: testing
     script:
-        - docker run --rm --tty --volume $PWD/test:/app --workdir /app composer:1.4 install --ignore-platform-reqs --no-scripts --no-progress
-        - cp -r test/vendor/codeigniter/framework/* test
         - mkdir test
         - touch test/result_test.html
         - cp composer.json test
+        - docker run --rm --tty --volume $PWD/test:/app --workdir /app composer:1.4 install --ignore-platform-reqs --no-scripts --no-progress
+        - cp -r test/vendor/codeigniter/framework/* test
         - mkdir -p test/vendor/santiane/restclient
         - cp -r libraries test/vendor/santiane/restclient
         - cp -r config test/application
