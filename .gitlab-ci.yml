@@ -14,7 +14,7 @@ test-unitary:
         - mkdir test
         - touch test/result_test.html
         - cp composer.json test
-        - mkdir test/vendor/santiane/restclient
+        - mkdir -p test/vendor/santiane/restclient
         - cp -r libraries test/vendor/santiane/restclient
         - cp -r config test/application
         - cp -r tests test/application
