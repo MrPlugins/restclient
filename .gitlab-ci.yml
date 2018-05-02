@@ -22,7 +22,7 @@ test-unitary:
         - docker run --rm --tty --volume $PWD/test:/app --workdir /app composer:1.4 install --ignore-platform-reqs --no-scripts --no-progress
         - cp -r test/vendor/codeigniter/framework/* test
         - ls -lah
-        - docker run --rm --tty -e CI_ENV=testing --volume $PWD/test:/app --workdir /app --entrypoint="ci/docker_entrypoint_php.sh" php:7.1-cli php -S localhost:8000 index.php test
+        - docker run --rm --tty -e CI_ENV=testing --volume $PWD/test:/app --workdir /app php:7.1-cli php -S localhost:8000 index.php test
     artifacts:
         when: on_failure
         paths: [test/result_test.html]
