@@ -420,7 +420,7 @@ class Restclient
      * @method clear
      * @return void
      */
-    public function clear()
+    private function clear()
     {
         $this->url           = null;
         $this->curl          = null;
