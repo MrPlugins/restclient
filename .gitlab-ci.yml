@@ -12,10 +12,12 @@ test-unitary:
     environment: testing
     script:
         - mkdir test
+        - touch test/result_test.html
         - cp composer.json test
         - ls -lah
         - docker run --rm --tty --volume $PWD/test:/app --workdir /app composer:1.4 install --ignore-platform-reqs --no-scripts --no-progress
         - cp -r test/vendor/codeigniter/framework/* test
+        - ls -lah
         - mkdir test/vendor/santiane/restclient
         - cp -r libraries test/vendor/santiane/restclient
         - cp -r config test/application
