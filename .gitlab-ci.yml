@@ -1,8 +1,5 @@
 image: docker:17.06
 
-services:
-    - docker:17.06-dind
-
 stages:
     - test
 
