@@ -14,7 +14,7 @@ composer require maltyxx/restclient
 ```
 
 ### Step 2 Examples
-Cotroller file is located in `/application/controllers/Client.php`.
+Controller file is located in `/application/controllers/Client.php`.
 ```php
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
@@ -28,11 +28,9 @@ class Client extends CI_Controller
             ->library('restclient')
             ->remove_package_path(FCPATH.'vendor/restclient');
 
-        $this->load->helper('url');
-
-        $json = $this->restclient->post(site_url('server'), [
+        $json = $this->restclient->post('https://my-super-webservice.com/ws', array(
             'lastname' => 'test'
-        ]);
+        ));
 
         $this->restclient->debug();
     }
