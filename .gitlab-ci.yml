@@ -14,7 +14,7 @@ test-unitary:
         - mkdir test
         - touch test/result_test.html
         - cp composer.json test
-        - docker run --rm --tty --volume $PWD/test:/app --workdir /app composer:1.4 install --ignore-platform-reqs --no-scripts --no-progress
+        - docker run --rm --tty --volume $PWD:/app --workdir /app/test composer:1.4 install --ignore-platform-reqs --no-scripts --no-progress
         - cp -r test/vendor/codeigniter/framework/* test
         - mkdir -p test/vendor/santiane/restclient
         - cp -r libraries test/vendor/santiane/restclient
@@ -22,7 +22,7 @@ test-unitary:
         - cp -r tests test/application
         - cp -r router.php test/router.php
         - ls -lah test/
-        - docker run --rm --tty -e CI_ENV=testing --volume $PWD/test:/app --workdir /app php:7.1-cli php -S localhost:8000 router.php
+        - docker run --rm --tty -e CI_ENV=testing --volume $PWD:/app --workdir /app/test php:7.1-cli php -S localhost:8000 router.php
     artifacts:
         when: on_failure
         paths: [test/result_test.html]
