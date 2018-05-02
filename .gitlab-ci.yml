@@ -20,8 +20,9 @@ test-unitary:
         - cp -r libraries test/vendor/santiane/restclient
         - cp -r config test/application
         - cp -r tests test/application
+        - cp -r router.php test/
         - ls -lah /test/
-        - docker run --rm --tty -e CI_ENV=testing --volume $PWD/test:/app --workdir /app php:7.1-cli php -S localhost:8000 index.php test
+        - docker run --rm --tty -e CI_ENV=testing --volume $PWD/test:/app --workdir /app php:7.1-cli php -S localhost:8000 router.php
     artifacts:
         when: on_failure
         paths: [test/result_test.html]
