@@ -20,7 +20,6 @@ test-unitary:
         - cp -r libraries test/vendor/santiane/restclient
         - cp -r config test/application
         - cp -r tests test/application
-        - docker cp ./ php71cli:/usr/src
         - docker run --rm -d --name=phpcli -v $PWD:/app --working /app php:7.1-cli php -S 0.0.0.0:8000 -t /app index.php
         - docker ps
     artifacts:
