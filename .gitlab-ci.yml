@@ -10,10 +10,6 @@ before_script:
 test-unitary:
     stage: test
     environment: testing
-    services:
-        - name: php:7.1-cli
-          alias: php71cli
-          command: ["php", "-S", "0.0.0.0:8000", "-t", "/usr/src", "index.php"]
     script:
         - mkdir test
         - touch test/result_test.html
@@ -25,7 +21,9 @@ test-unitary:
         - cp -r config test/application
         - cp -r tests test/application
         - docker cp ./ php71cli:/usr/src
-        - docker exec --rm --tty -e CI_ENV=testing --volume $PWD:/usr/src --workdir /usr/src php71cli php index.php test
+        - docker run --rm -d --name=phpcli -v $PWD:/app --working /app php -S 0.0.0.0:8000 -t /app index.php
+        - docker ps
+        #- docker exec --rm --tty -e CI_ENV=testing --volume $PWD:/usr/src --workdir /usr/src php71cli php index.php test
     artifacts:
         when: on_failure
         paths: [test/result_test.html]
