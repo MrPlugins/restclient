@@ -22,7 +22,7 @@ test-unitary:
         - cp -r tests test/application
         - cp -r router.php test/router.php
         - ls -lah test/
-        - docker run --rm --tty -e CI_ENV=testing --volume $PWD:/app --workdir /app/test php:7.1-cli php -S localhost:8000 router.php
+        - docker run --rm --tty -e CI_ENV=testing --volume $PWD:/app --workdir /app/test php:7.1-cli php -S 0.0.0.0:8000 router.php
     artifacts:
         when: on_failure
         paths: [test/result_test.html]
