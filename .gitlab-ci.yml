@@ -21,7 +21,8 @@ test-unitary:
         - cp -r config test/application
         - cp -r tests test/application
         - docker run --rm --detach --name=phpcli71-$CI_PROJECT_ID --volume $PWD:/app --workdir /app php:7.1-cli php -S 0.0.0.0:8000 -t /app index.php
-        - docker exec phpcli71-$CI_PROJECT_ID php index.php test
+        - docker ps
+        - docker exec --workdir /app/ phpcli71-$CI_PROJECT_ID php index.php test
         - docker stop phpcli71-$CI_PROJECT_ID
         - docker rm phpcli71-$CI_PROJECT_ID
     artifacts:
