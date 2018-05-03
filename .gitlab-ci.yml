@@ -12,8 +12,8 @@ test-unitary:
     environment: testing
     services:
         - name: php:7.1-cli
-            alias: php71cli
-            command: ["php", "-S", "0.0.0.0:8000", "-t", "/usr/src", "index.php"]
+          alias: php71cli
+          command: ["php", "-S", "0.0.0.0:8000", "-t", "/usr/src", "index.php"]
     script:
         - mkdir test
         - touch test/result_test.html
