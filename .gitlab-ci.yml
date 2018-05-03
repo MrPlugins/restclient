@@ -21,9 +21,8 @@ test-unitary:
         - cp -r config test/application
         - cp -r tests test/application
         - docker cp ./ php71cli:/usr/src
-        - docker run --rm -d --name=phpcli -v $PWD:/app --working /app php -S 0.0.0.0:8000 -t /app index.php
+        - docker run --rm -d --name=phpcli -v $PWD:/app --working /app php:7.1-cli php -S 0.0.0.0:8000 -t /app index.php
         - docker ps
-        #- docker exec --rm --tty -e CI_ENV=testing --volume $PWD:/usr/src --workdir /usr/src php71cli php index.php test
     artifacts:
         when: on_failure
         paths: [test/result_test.html]
