@@ -24,6 +24,9 @@ test-unitary:
         - cp -r config test/application
         - cp -r tests test/application
         - docker run --rm --tty -e CI_ENV=testing --volume $PWD/test:/app --workdir /app --entrypoint="ci/phpserver_entrypoint.sh" php:7.1-cli sh -c "php index.php test"
+        - ls -lah
+        - cd test
+        - ls -lah
     artifacts:
         paths: [test/result_test.html]
     only:
