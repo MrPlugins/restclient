@@ -88,7 +88,7 @@ class Test extends CI_Controller
             }
 
             if ($error === true) {
-                exit(1);
+                exit(23);
             }
         }
     }
