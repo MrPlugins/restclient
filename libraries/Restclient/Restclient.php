@@ -322,7 +322,7 @@ class Restclient
 
         // If we got some
         if (isset($data[1])) {
-            foreach ($data[1] as $i => $cookie) {
+            foreach ($data[1] as $cookie) {
                 if (!empty($cookie)) {
                     list($key, $value) = explode('=', $cookie);
                     $cookies[$key] = $value;
@@ -363,7 +363,7 @@ class Restclient
      */
     public function _headers($curl, $data)
     {
-        if (!empty($data)) {
+        if (is_resource($curl) && !empty($data)) {
             $this->result_header .= $data;
         }
 
@@ -376,7 +376,7 @@ class Restclient
      * @param  boolean $return True will store the debug, False will print it
      * @return string
      */
-    public function debug($return = false)
+    public function debug($return = true)
     {
         // Load text helper to format code and add css to ouput
         $output = '<style type="text/css">body{background-color:#fff;margin:40px;font:13px/20px normal Helvetica,Arial,sans-serif;color:#4F5155}a{color:#039;background-color:transparent;font-weight:400}h1{color:#444;background-color:transparent;border-bottom:1px solid #D0D0D0;font-size:19px;font-weight:400;margin:0 0 14px;padding:14px 15px 10px}code{font-family:Consolas,Monaco,Courier New,Courier,monospace;font-size:12px;background-color:#f9f9f9;border:1px solid #D0D0D0;color:#002166;display:block;margin:14px 0;padding:12px 10px}#body{margin:0 15px}p.footer{text-align:right;font-size:11px;border-top:1px solid #D0D0D0;line-height:32px;padding:0 10px;margin:20px 0 0}#container{margin:10px;border:1px solid #D0D0D0;box-shadow:0 0 8px #D0D0D0}</style>';
@@ -408,11 +408,11 @@ class Restclient
         }
 
         // Kind of output
-        if ($return) {
+        if (!$return) {
             return $output;
-        } else {
-            echo $output;
         }
+
+        echo $output;
     }
 
     /**

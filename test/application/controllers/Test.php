@@ -81,14 +81,20 @@ class Test extends CI_Controller
                 if ($test['Result'] !== 'Passed') {
                     $error = true;
                     echo 'An error has occured for test : '.$test['Test Name'].PHP_EOL;
-                } else {
-                    echo 'Test successfully passed : '.$test['Test Name'].PHP_EOL;
+                    continue;
                 }
+
+                echo 'Test successfully passed : '.$test['Test Name'].PHP_EOL;
             }
 
             if ($error === true) {
-                exit(EXIT_ERROR);
+                $this->exit();
             }
         }
+    }
+
+    public function exit()
+    {
+        exit(EXIT_ERROR);
     }
 }
