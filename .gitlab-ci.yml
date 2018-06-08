@@ -12,7 +12,6 @@ test-unitary:
     environment: testing
     script:
         - mkdir test
-        - test/result_test.html
         - cp composer.json test
         - ls -lah
         - docker run --rm --tty --volume $PWD:/app --workdir /app/test composer:1.4 install --ignore-platform-reqs --no-scripts --no-progress
