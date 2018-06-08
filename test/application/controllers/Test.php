@@ -88,13 +88,8 @@ class Test extends CI_Controller
             }
 
             if ($error === true) {
-                $this->exit();
+                exit(1);
             }
         }
-    }
-
-    public function exit()
-    {
-        exit(EXIT_ERROR);
     }
 }

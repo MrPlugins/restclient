@@ -373,10 +373,10 @@ class Restclient
     /**
      * Pretty debug function
      * @method debug
-     * @param  boolean $return True will store the debug, False will print it
+     * @param  boolean $flag True will store the debug, False will print it
      * @return string
      */
-    public function debug($return = true)
+    public function debug($flag = true)
     {
         // Load text helper to format code and add css to ouput
         $output = '<style type="text/css">body{background-color:#fff;margin:40px;font:13px/20px normal Helvetica,Arial,sans-serif;color:#4F5155}a{color:#039;background-color:transparent;font-weight:400}h1{color:#444;background-color:transparent;border-bottom:1px solid #D0D0D0;font-size:19px;font-weight:400;margin:0 0 14px;padding:14px 15px 10px}code{font-family:Consolas,Monaco,Courier New,Courier,monospace;font-size:12px;background-color:#f9f9f9;border:1px solid #D0D0D0;color:#002166;display:block;margin:14px 0;padding:12px 10px}#body{margin:0 15px}p.footer{text-align:right;font-size:11px;border-top:1px solid #D0D0D0;line-height:32px;padding:0 10px;margin:20px 0 0}#container{margin:10px;border:1px solid #D0D0D0;box-shadow:0 0 8px #D0D0D0}</style>';
@@ -408,7 +408,7 @@ class Restclient
         }
 
         // Kind of output
-        if (!$return) {
+        if ($flag) {
             return $output;
         }
 
