@@ -8,6 +8,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  */
 class Restclient
 {
+    const OUTPUT_TRUE = true;
+
     /**
      * CI Instance
      * @var object
@@ -376,7 +378,7 @@ class Restclient
      * @param  boolean $output True will store the debug, False will print it
      * @return string
      */
-    public function debug($output = false)
+    public function debug($output = self::OUTPUT_TRUE)
     {
         // Starting buffering content
         ob_start();
