@@ -373,51 +373,58 @@ class Restclient
     /**
      * Pretty debug function
      * @method debug
-     * @param  boolean $debug True will store the debug, False will print it
+     * @param  boolean $output True will store the debug, False will print it
      * @return string
      */
-    public function debug($debug)
+    public function debug($output = false)
     {
+        // Starting buffering content
+        ob_start();
+
+        // Set debug expand level to 10 by default
+        ref::config('expLvl', 10);
+
         // Load text helper to format code and add css to ouput
-        $output = '<style type="text/css">body{background-color:#fff;margin:40px;font:13px/20px normal Helvetica,Arial,sans-serif;color:#4F5155}a{color:#039;background-color:transparent;font-weight:400}h1{color:#444;background-color:transparent;border-bottom:1px solid #D0D0D0;font-size:19px;font-weight:400;margin:0 0 14px;padding:14px 15px 10px}code{font-family:Consolas,Monaco,Courier New,Courier,monospace;font-size:12px;background-color:#f9f9f9;border:1px solid #D0D0D0;color:#002166;display:block;margin:14px 0;padding:12px 10px}#body{margin:0 15px}p.footer{text-align:right;font-size:11px;border-top:1px solid #D0D0D0;line-height:32px;padding:0 10px;margin:20px 0 0}#container{margin:10px;border:1px solid #D0D0D0;box-shadow:0 0 8px #D0D0D0}</style>';
-        $output .= '<div id="container">'.PHP_EOL;
-        $output .= '<h1>Restclient Debug</h1>'.PHP_EOL;
-        $output .= '<div id="body">'.PHP_EOL;
-        $output .= '<h2>Query</h2>'.PHP_EOL;
-        $output .= '<h3>Headers</h3>'.PHP_EOL;
-        $output .= (!empty($this->output_header)) ? '<code>'.print_r($this->output_header, true).'</code>' : 'No headers sent';
-        $output .= '<h3>Datas</h3>'.PHP_EOL;
-        $output .= (!empty($this->output_value)) ? '<code><pre>'.print_r($this->output_value, true).'</pre></code>' : 'No datas sent';
-        $output .= '<h3>Call</h3>'.PHP_EOL;
-        $output .= (!empty($this->info)) ? '<code><pre>'.print_r($this->info, true).'</pre></code>' : 'Empty call';
-        $output .= '<h2>Response (<font color="'.(($this->http_code > 308) ? 'red' : 'green').'"><b>'.$this->http_code.'</b></font>)</h2>'.PHP_EOL;
-        $output .= '<h3>Headers</h3>'.PHP_EOL;
-        $output .= (!empty($this->result_header)) ? '<code><pre>'.print_r($this->result_header, true).'</pre></code>' : 'No response headers';
-        $output .= '<h3>Return</h3>'.PHP_EOL;
-
-        if (!empty($this->result_value)) {
-            $output .= '<code><pre>'.print_r($this->result_value, true).'</pre></code>';
-        }
-
-
-        $output .= '</div>'.PHP_EOL;
-        $output .= '</div>'.PHP_EOL;
+        echo '<style type="text/css">body{background-color:#fff;margin:40px;font:13px/20px normal Helvetica,Arial,sans-serif;color:#4F5155}a{color:#039;background-color:transparent;font-weight:400}h1{color:#444;background-color:transparent;border-bottom:1px solid #D0D0D0;font-size:19px;font-weight:400;margin:0 0 14px;padding:14px 15px 10px}code{font-family:Consolas,Monaco,Courier New,Courier,monospace;font-size:12px;background-color:#f9f9f9;border:1px solid #D0D0D0;color:#002166;display:block;margin:14px 0;padding:12px 10px}#body{margin:0 15px}p.footer{text-align:right;font-size:11px;border-top:1px solid #D0D0D0;line-height:32px;padding:0 10px;margin:20px 0 0}#container{margin:10px;border:1px solid #D0D0D0;box-shadow:0 0 8px #D0D0D0}</style>';
+        echo '<div id="container">'.PHP_EOL;
+        echo '<h1>Restclient Debug</h1>'.PHP_EOL;
+        echo '<div id="body">'.PHP_EOL;
+        echo '<h3>Query Headers</h3>'.PHP_EOL;
+        echo (!empty($this->output_header)) ? r($this->output_header) : 'No headers sent';
+        echo '<h3>Query Datas</h3>'.PHP_EOL;
+        echo (!empty($this->output_value)) ? r($this->output_value) : 'No datas sent';
+        echo '<h3>Query Call</h3>'.PHP_EOL;
+        echo (!empty($this->info)) ? r($this->info).'</pre></code>' : 'Empty call';
+        echo '<h3>Response Code (<font color="'.(($this->http_code > 308) ? 'red' : 'green').'"><b>'.$this->http_code.'</b></font>)</h3>'.PHP_EOL;
+        echo '<h3>Response Headers</h3>'.PHP_EOL;
+        echo (!empty($this->result_header)) ? r($this->result_header) : 'No response headers';
+        echo '<h3>Response Return</h3>'.PHP_EOL;
+        echo (!empty($this->result_value)) ? r($this->result_value) : 'No response value';
+        echo '</div>'.PHP_EOL;
+        echo '</div>'.PHP_EOL;
 
         // If we got some errors
         if (!empty($this->error)) {
-            $output .= '<h3>Errors</h3>'.PHP_EOL;
-            $output .= '<code>'.PHP_EOL;
-            $output .= '<strong>Code:</strong> '.$this->errno.'<br/>'.PHP_EOL;
-            $output .= '<strong>Message:</strong> '.$this->error.'<br/>'.PHP_EOL;
-            $output .= '</code>'.PHP_EOL;
+            echo '<h3>Errors</h3>'.PHP_EOL;
+            echo '<code>'.PHP_EOL;
+            echo '<strong>Code:</strong> '.$this->errno.'<br/>'.PHP_EOL;
+            echo '<strong>Message:</strong> '.$this->error.'<br/>'.PHP_EOL;
+            echo '</code>'.PHP_EOL;
         }
+
+        // Get buffered content
+        $contents = ob_get_contents();
+
+        // Flush beffered content
+        ob_end_clean();
 
         // Kind of output
-        if ($debug === true) {
-            return $output;
+        if ($output === true) {
+            return $contents;
         }
 
-        echo $output;
+        // Output
+        echo $contents;
     }
 
     /**

@@ -4,15 +4,10 @@ plugins:
     config:
       file_extensions: "php"
       rulesets: "phpmd.xml"
-  eslint:
-    enabled: true
-    config:
-      extensions:
-        - .js
 exclude_patterns:
   - ci/
   - vendor/
   - node_modules/
   - bower_components/
-  - application/tests/
+  - application/test/
   - application/third_party/
