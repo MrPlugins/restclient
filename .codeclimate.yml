@@ -6,6 +6,7 @@ plugins:
       rulesets: "phpmd.xml"
 exclude_patterns:
   - ci/
+  - test/
   - vendor/
   - node_modules/
   - bower_components/
