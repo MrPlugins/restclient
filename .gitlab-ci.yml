@@ -32,8 +32,5 @@ test-unitary:
         - cp -r libraries test/vendor/santiane/restclient
         - cp -r config test/application
         - docker run --rm --tty -e CI_ENV=testing --volume $PWD/test:/app --workdir /app --entrypoint="ci/phpserver_entrypoint.sh" php:7.1-cli sh -c "php index.php test"
-    artifacts:
-        when: on_failure
-        paths: [test/result_test.html]
     only:
         - testing
