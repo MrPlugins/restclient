@@ -3,10 +3,6 @@ image: docker:17.06
 stages:
     - test
 
-cache:
-    paths:
-        - vendor/
-
 before_script:
     - find . -type d -exec chmod 755 {} +
     - find . -type f -exec chmod 644 {} +
