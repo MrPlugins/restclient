@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-/** Librairie REST Full Client 
+/** Librairie REST Full Client
  * @author Yoann VANITOU
  * @license http://www.apache.org/licenses/LICENSE-2.0 Apache 2.0
  * @link https://github.com/maltyxx/restclient
@@ -9,186 +9,326 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Restclient
 {
     /**
-     * Instance de Codeigniter
+     * Set default value of output
+     * @var boolean
+     */
+    const OUTPUT_DEBUG = false;
+
+    /**
+     * CI Instance
      * @var object
      */
     private $CI;
 
     /**
-     * Configuration
-     * @var array 
+     * Destination URL
+     * @var string
      */
-    private $config = array(
-        'port'          => NULL,
-        'auth'          => FALSE,
-        'auth_type'     => 'basic',
-        'auth_username' => '',
-        'auth_password' => '',
-        'header'        => FALSE,
-        'cookie'        => FALSE,
-        'timeout'       => 30,
-        'result_assoc'  => TRUE,
-        'cache'         => FALSE,
-        'tts'           => 3600
-    );
+    private $url;
 
     /**
-     * Information sur la requête
-     * @var array 
+     * CURL ressource
+     * @var object
+     */
+    private $curl;
+
+    /**
+     * Informations about request
+     * @var array
      */
     private $info = array();
 
     /**
-     * Code de retour
-     * @var integer 
+     * Return code
+     * @var integer
      */
     private $errno;
 
     /**
-     * Erreurs
-     * @var string 
+     * Errors
+     * @var string
      */
     private $error;
 
     /**
-     * Valeur de l'envoi
+     * Datas to send
      * @var array
      */
     private $output_value = array();
 
     /**
-     * En-tête de l'envoi
-     * @var array 
+     * Headers to send
+     * @var array
      */
     private $output_header = array();
 
     /**
-     * Valeur du retour
-     * @var string 
+     * Return value
+     * @var string
      */
-    private $input_value;
+    private $result_value = null;
 
     /**
-     * En-tête du retour
-     * @var string 
+     * Return headers
+     * @var string
      */
-    private $input_header;
-    
-    /**
-     * Code du retour
-     * @var integer|NULL
-     */
-    private $http_code;
-    
-    /**
-     * type de contenu retour
-     * @var string|NULL 
-     */
-    private $content_type;
+    private $result_header = null;
 
     /**
-     * Constructeur
-     * @param array $config
+     * HTTP Method
+     * @var string
      */
-    public function __construct(array $config = array())
-    {
+    private $http_method = 'post';
 
-        // Initialise la configuration, si elle existe
-        $this->initialize($config);
+    /**
+     * Return code
+     * @var integer|null
+     */
+    public $http_code = null;
 
-        // Charge l'instance de CodeIgniter
-        $this->CI = &get_instance();
-    }
+    /**
+     * Content type of return
+     * @var string|null
+     */
+    private $content_type = null;
+
+    /**
+     * CURL Options
+     * @var array
+     */
+    private $curl_options = array();
 
     /**
      * Configuration
-     * @param array $config
+     * @var array
+     */
+    private $config = array(
+        'port'          => null,
+        'auth'          => false,
+        'auth_type'     => 'basic',
+        'auth_username' => '',
+        'auth_password' => '',
+        'header'        => false,
+        'cookie'        => false,
+        'timeout'       => 30,
+        'result_assoc'  => true,
+        'cache'         => false,
+        'tts'           => 3600,
+        'methods'       => array('get', 'put', 'post', 'patch', 'delete')
+    );
+
+    /**
+     * Class Constructor
+     * @method __construct
+     * @param  array       $config
+     */
+    public function __construct(array $config = array())
+    {
+        // Load the CI Instance
+        $this->CI = &get_instance();
+
+        // Initialize configuration
+        $this->initialize($config);
+
+        // Initialize default CURL options
+        $this->curl_options = array(
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => $this->config['timeout'],
+            CURLOPT_FAILONERROR    => false,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_CUSTOMREQUEST  => strtoupper($this->http_method),
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_HEADER         => false,
+            CURLOPT_HEADERFUNCTION => array($this, '_headers'),
+            CURLOPT_COOKIESESSION  => true,
+            CURLINFO_HEADER_OUT    => true,
+            CURLOPT_POST           => false
+        );
+    }
+
+    /**
+     * Initialize function
+     * @method initialize
+     * @param  array      $config Config to assert
+     * @return void
      */
     public function initialize(array $config = array())
     {
-        // Si il y a pas de fichier de configuration
+        // Verification about config file
         if (empty($config)) {
-            return;
+            show_error('Unable to find Restclient config file', null, 'Restclient Error');
         }
 
+        // Append config to library
         $this->config = array_merge($this->config, (isset($config['restclient'])) ? $config['restclient'] : $config);
     }
 
     /**
-     * Requête GET
-     * @param type $url
-     * @param array $data
-     * @param array $options
-     * @return string|boolean
+     * Magic method who call the right one
+     * @method __call
+     * @author Romain GALLIEN <r.gallien@santiane.fr>
+     * @return string
      */
-    public function get($url, $data = array(), array $options = array())
+    public function __call($http_method = 'post', array $arguments = array())
     {
-        $url = "$url?".http_build_query($data);
-        return $this->_query('get', $url, $data, $options);
+        // Clear all previous datas to avoid errors or mismatch
+        $this->clear();
+
+        // Security to check if method is valid
+        if (!in_array(strtolower($http_method), $this->config['methods'])) {
+            show_error('The '.$http_method.' method is not allowed', null, 'Restclient Error');
+        }
+
+        // Set HTTP_METHOD
+        $this->http_method = $http_method;
+        $this->curl_options[CURLOPT_CUSTOMREQUEST] = strtoupper($this->http_method);
+
+        // Security to check if we got argments
+        if (empty($arguments[0])) {
+            show_error('URL destination is missing', null, 'Restclient Error');
+        }
+
+        // Define URL destination
+        $this->url = $arguments[0];
+
+        // Define DATAS sent
+        $this->output_value = $arguments[1];
+
+        // If we got additionnal options we initialize the lib with
+        if (!empty($arguments[2]) && is_array($arguments[2])) {
+            $this->initialize($arguments[2]);
+        }
+
+        // Execute request and run the output
+        return $this->_query();
     }
 
     /**
-     * Requête POST
-     * @param type $url
-     * @param array $data
-     * @param array $options
-     * @return string|boolean
+     * Prepare the request
+     * @return mixed         string / bool
      */
-    public function post($url, $data = array(), array $options = array())
+    private function _query()
     {
-        return $this->_query('post', $url, $data, $options);
+        // If we got GET request, we have to construct the right URL
+        if ($this->http_method === 'get') {
+            $this->url = $this->url.'?'.http_build_query($this->output_value);
+        }
+
+        // Build and send the CURL request
+        $this->result_value = $this->_send_request();
+
+        // If response contain some JSON we decode it
+        if (strstr($this->content_type, 'json')) {
+            $this->result_value = json_decode($this->result_value, $this->config['result_assoc']);
+        }
+
+        // Return
+        return $this->result_value;
     }
 
     /**
-     * Requête PUT
-     * @param type $url
-     * @param array $data
-     * @param array $options
-     * @return string|boolean
+     * Send the request
+     * @method _send_request
+     * @return array
      */
-    public function put($url, $data = array(), array $options = array())
+    private function _send_request()
     {
-        return $this->_query('put', $url, $data, $options);
-    }
-    
-    /**
-     * Requête PATCH
-     * @param type $url
-     * @param array $data
-     * @param array $options
-     * @return string|boolean
-     */
-    public function patch($url, $data = array(), array $options = array())
-    {
-        return $this->_query('patch', $url, $data, $options);
+        // Creation of CURL ressource
+        $curl = curl_init();
+
+        // Set the destination URL
+        $this->curl_options[CURLOPT_URL] = $this->url;
+
+        // If we got some a PORT in config file
+        if (!empty($this->config['port'])) {
+            $this->curl_options[CURLOPT_PORT] = $this->config['port'];
+        }
+
+        // Is auth is necessary
+        if ($this->config['auth']) {
+            switch ($this->config['auth_type']) {
+                case 'basic':
+                    $this->curl_options[CURLOPT_HTTPAUTH] = CURLAUTH_BASIC;
+                    $this->curl_options[CURLOPT_USERPWD] = "{$this->config['auth_username']}:{$this->config['auth_password']}";
+            }
+        }
+
+        // If we got some HEADERS to send
+        if (!empty($this->config['header']) && is_array($this->config['header'])) {
+            foreach ($this->config['header'] as $key => $value) {
+                $this->output_header[] = $key.': '.$value;
+            }
+        }
+
+        // If we got post request we set the CURL option
+        if ($this->http_method === 'post') {
+            $this->curl_options[CURLOPT_POST] = true;
+        }
+
+        // Store all datas in CURL option
+        if (!empty($this->output_value)) {
+            $this->curl_options[CURLOPT_POSTFIELDS] = (is_array($this->output_value)) ? http_build_query($this->output_value) : $this->output_value;
+        }
+
+        // Defines HEADERS of request
+        $this->curl_options[CURLOPT_HTTPHEADER] = $this->output_header;
+
+        // If we got some COOKIES to send
+        if (!empty($this->config['cookie']) && is_array($this->config['cookie'])) {
+            $cookies = array();
+
+            foreach ($this->config['cookie'] as $key => $value) {
+                $cookies[] = $key.'='.$value;
+            }
+
+            $this->curl_options[CURLOPT_COOKIE] = implode(';', $cookies);
+        }
+
+        // CURL set options as batch
+        curl_setopt_array($curl, $this->curl_options);
+
+        // Request execution
+        $response = curl_exec($curl);
+
+        // Get the HTTP response code
+        $this->http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+        // Get the HTTP response content type
+        $this->content_type = curl_getinfo($curl, CURLINFO_CONTENT_TYPE);
+
+        // Get additionnal informations about request
+        $this->info = curl_getinfo($curl);
+
+        // Errors management
+        if ($response === false) {
+            $this->errno = curl_errno($curl);
+            $this->error = curl_error($curl);
+            return false;
+        }
+
+        // Close the CURL session
+        curl_close($curl);
+
+        // Return
+        return $response;
     }
 
     /**
-     * Requête DELETE
-     * @param type $url
-     * @param array $data
-     * @param array $options
-     * @return string|boolean
-     */
-    public function delete($url, $data = array(), array $options = array())
-    {
-        return $this->_query('delete', $url, $data, $options);
-    }
-
-    /**
-     * Récupère les cookies
+     * Fetch the cookies
+     * @method get_cookie
      * @return array
      */
     public function get_cookie()
     {
         $cookies = array();
 
-        // Recherche dans les en-têtes les cookies
-        preg_match_all('/Set-Cookie: (.*?);/is', $this->input_header, $data, PREG_PATTERN_ORDER);
+        // Search cookies in headers
+        preg_match_all('/Set-Cookie: (.*?);/is', $this->result_header, $data, PREG_PATTERN_ORDER);
 
-        // Si il y a des cookies
+        // If we got some
         if (isset($data[1])) {
-            foreach ($data[1] as $i => $cookie) {
+            foreach ($data[1] as $cookie) {
                 if (!empty($cookie)) {
                     list($key, $value) = explode('=', $cookie);
                     $cookies[$key] = $value;
@@ -196,286 +336,123 @@ class Restclient
             }
         }
 
+        // Return
         return $cookies;
     }
-    
+
     /**
-     * Les dernières informations de la requête
+     * Last informations about request
+     * @method info
      * @return array
      */
     public function info()
-    {        
+    {
         return $this->info;
     }
-    
+
     /**
-     * Le dernier code de retour http
-     * @return interger|NULL
+     * Last HTTP return code
+     * @method http_code
+     * @return mixed    interger / null
      */
     public function http_code()
-    {        
+    {
         return $this->http_code;
     }
 
     /**
-     * Mode debug
-     * @param  boolean $return retournera l'information plutôt que de l'afficher
-     * @return string le code HTML
-     */
-    public function debug($return = FALSE)
-    {
-        $input = "=============================================<br/>".PHP_EOL;
-        $input .= "=============================================<br/>".PHP_EOL;
-        $input .= "<h1>Debug</h1>".PHP_EOL;
-        $input .= "=============================================<br/>".PHP_EOL;
-        $input .= "<h2>Envoi</h2>".PHP_EOL;
-        $input .= "=============================================<br/>".PHP_EOL;
-        $input .= "<h3>En-tete</h3>".PHP_EOL;
-        $input .= "<pre>".PHP_EOL;
-        $input .= print_r($this->output_header, TRUE);
-        $input .= "</pre>".PHP_EOL;
-        $input .= "<h3>Valeur</h3>".PHP_EOL;
-        $input .= "<pre>".PHP_EOL;
-        $input .= print_r($this->output_value, TRUE);
-        $input .= "</pre>".PHP_EOL;
-        $input .= "<h3>Informations</h3>".PHP_EOL;
-        $input .= "</pre>".PHP_EOL;
-        $input .= print_r($this->info, TRUE);
-        $input .= "</pre><br/>".PHP_EOL;
-        $input .= "=============================================<br/>".PHP_EOL;
-        $input .= "<h2>Response</h2>".PHP_EOL;
-        $input .= "=============================================<br/>".PHP_EOL;
-        $input .= "<h3>En-tete</h3>".PHP_EOL;
-        $input .= "<pre>".PHP_EOL;
-        $input .= print_r($this->input_header, TRUE);
-        $input .= "</pre>".PHP_EOL;
-        $input .= "<h3>Valeur</h3>".PHP_EOL;
-        $input .= "<pre>".PHP_EOL;
-        $input .= print_r($this->input_value, TRUE);
-        $input .= "</pre>".PHP_EOL;
-        $input .= "=============================================<br/>".PHP_EOL;
-
-        // Si il y a des erreurs
-        if (!empty($this->error)) {
-            $input .= "<h3>Errors</h3>".PHP_EOL;
-            $input .= "<strong>Code:</strong> ".$this->errno."<br/>".PHP_EOL;
-            $input .= "<strong>Message:</strong> ".$this->error."<br/>".PHP_EOL;
-            $input .= "=============================================<br/>".PHP_EOL;
-        }
-
-        // Type de sortie
-        if ($return) {
-            return $input;
-        } else {
-            echo $input;
-        }
-    }
-
-    /**
-     * Envoi la requête
-     * @param string $method
-     * @param string $url
-     * @param array $data
-     * @param array $options
-     * @return string|boolean
-     */
-    private function _query($method, $url, $data = array(), array $options = array())
-    {
-        // Initialise la configuration, si elle existe
-        $this->initialize($options);
-
-        // Initialisation
-        $this->output_header = array();
-        $this->output_value = array();
-        $this->input_header = '';
-        $this->input_value = '';
-        $this->http_code = NULL;
-        $this->content_type = NULL;
-
-        // Si le cache est activé
-        if ($this->config['cache']) {
-            // Parse l'URL
-            $url_indo = parse_url($url);
-
-            // Définition de l'api
-            $api = 'rest'.str_replace('/', '_', $url_indo['path']);
-
-            // Définition de la clé
-            $cache_key = (isset($url_indo['query'])) ? "{$api}_".md5($url_indo['query']) : "{$api}";
-
-            // Si la méthode est de type GET
-            if ($method == 'get') {
-                // Si il existe une clé
-                if ($result = $this->CI->cache->get($cache_key)) {
-                    return $result;
-                }
-
-                // Si la méthode n'est pas de type GET
-            } else {
-                // Si l'arbre de clés existe
-                if ($keys = $this->CI->cache->get($api)) {
-                    if (is_array($keys)) {
-                        // Parcours les clés pour les supprimer
-                        foreach ($keys as $key) {
-                            $this->CI->cache->delete($key);
-                        }
-                    }
-
-                    // Supprime l'arbre de clés
-                    $this->CI->cache->delete($api);
-                }
-            }
-        }
-
-        // Création d'une nouvelle ressource cURL
-        $curl = curl_init();
-
-        // Configuration de l'URL et d'autres options
-        curl_setopt($curl, CURLOPT_URL, $url);
-
-        // Si le port est spécifié
-        if (!empty($this->config['port'])) {
-            curl_setopt($curl, CURLOPT_PORT, $this->config['port']);
-        }
-
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($curl, CURLOPT_TIMEOUT, $this->config['timeout']);
-        curl_setopt($curl, CURLOPT_FAILONERROR, FALSE);
-        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, FALSE);
-        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, strtoupper($method));
-        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
-        curl_setopt($curl, CURLOPT_HEADER, FALSE);
-        curl_setopt($curl, CURLOPT_HEADERFUNCTION, array($this, '_headers'));
-        curl_setopt($curl, CURLOPT_COOKIESESSION, TRUE);
-        curl_setopt($curl, CURLINFO_HEADER_OUT, TRUE);
-
-        // Si il y a une authentification
-        if ($this->config['auth']) {
-            switch ($this->config['auth_type']) {
-                // Authentification http basic
-                case 'basic':
-                    curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-                    curl_setopt($curl, CURLOPT_USERPWD, "{$this->config['auth_username']}:{$this->config['auth_password']}");
-            }
-        }
-
-        // Si il y a des headers
-        if (!empty($this->config['header']) && is_array($this->config['header'])) {
-            // Ajoute les en-têtes
-            foreach ($this->config['header'] as $key => $value) {
-                $this->output_header[] = "$key: $value";
-            }
-        }
-
-        // Référence du data
-        $this->output_value =& $data;
-
-        // Encodage des datas
-        switch ($method) {
-            case 'post':
-                curl_setopt($curl, CURLOPT_POST, TRUE);
-
-                if (!empty($data)) {
-                    curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
-                }
-                break;
-            case 'put':
-            case 'patch':
-            case 'delete':
-                if (!empty($data)) {
-                    curl_setopt($curl, CURLOPT_POSTFIELDS, (is_array($data)) ? http_build_query($data) : $data);
-                }
-                break;
-            case 'get':
-            default:
-        }
-
-        // Définition des headers d'envoi
-        curl_setopt($curl, CURLOPT_HTTPHEADER, $this->output_header);
-
-        // Si y il a un cookie
-        if (!empty($this->config['cookie']) && is_array($this->config['cookie'])) {
-            $cookies = array();
-
-            foreach ($this->config['cookie'] as $key => $value) {
-                $cookies[] = "$key=$value";
-            }
-
-            curl_setopt($curl, CURLOPT_COOKIE, implode(";", $cookies));
-        }
-
-        // Récupération de l'URL et affichage sur le naviguateur
-        $response = curl_exec($curl);
-        
-        // Récupération du code http
-        $this->http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        
-        // Récupération du type de contenu
-        $this->content_type = curl_getinfo($curl, CURLINFO_CONTENT_TYPE);
-
-        // Information sur la requete
-        $this->info = curl_getinfo($curl);
-        
-        // Gestion des erreurs
-        if ($response === FALSE) {
-            $this->errno = curl_errno($curl);
-            $this->error = curl_error($curl);
-            return FALSE;
-        }
-
-        // Fermeture de la session cURL
-        curl_close($curl);
-                
-        // Si le contenu est du json
-        if (strstr($this->content_type, 'json')) {
-            $result = json_decode($response, $this->config['result_assoc']);
-        
-        // Si autre format
-        } else {
-            $result = $response;
-        }
-        
-        // Référence de la réponse
-        $this->input_value = & $response;
-
-        // Si le cahche est activé et que la méthode est de type GET 
-        if ($this->config['cache'] && $method == 'get') {
-            // Si la clé existe dans le noeud
-            if (!$keys = $this->CI->cache->get($api) OR ! isset($keys[$cache_key])) {
-                // Récupère les clés existantes
-                $keys = (is_array($keys)) ? $keys : array();
-
-                // Enregistre la clé
-                $keys[$cache_key] = $cache_key;
-
-                // Sauvegarde les clés
-                $this->CI->cache->save($api, $keys, $this->config['tts']);
-            }
-
-            // Sauvegarde les données
-            $this->CI->cache->save($cache_key, $result, $this->config['tts']);
-        }
-
-        // Retourne les résultats
-        return $result;
-    }
-
-    /**
-     * Récupère les en-têtes
-     * @param resource $curl
-     * @param string $data
-     * @return integer
+     * CURL callback about response Headers
+     * @method _headers
+     * @param  object   $curl CURL ressource
+     * @param  array    $data
+     * @return integer  Headers size
      */
     public function _headers($curl, $data)
     {
-        if (!empty($data)) {
-            $this->input_header .= $data;
+        if (is_resource($curl) && !empty($data)) {
+            $this->result_header .= $data;
         }
-        
+
         return strlen($data);
     }
-    
+
+    /**
+     * Pretty debug function
+     * @method debug
+     * @param  boolean $output True will store the debug, False will print it
+     * @return string
+     */
+    public function debug($output = self::OUTPUT_DEBUG)
+    {
+        // Starting buffering content
+        ob_start();
+
+        // Set debug expand level to 10 by default
+        $dump = new ref();
+        $dump->config('expLvl', 10);
+
+        // Load text helper to format code and add css to ouput
+        echo '<style type="text/css">body{background-color:#fff;margin:40px;font:13px/20px normal Helvetica,Arial,sans-serif;color:#4F5155}a{color:#039;background-color:transparent;font-weight:400}h1{color:#444;background-color:transparent;border-bottom:1px solid #D0D0D0;font-size:19px;font-weight:400;margin:0 0 14px;padding:14px 15px 10px}code{font-family:Consolas,Monaco,Courier New,Courier,monospace;font-size:12px;background-color:#f9f9f9;border:1px solid #D0D0D0;color:#002166;display:block;margin:14px 0;padding:12px 10px}#body{margin:0 15px}p.footer{text-align:right;font-size:11px;border-top:1px solid #D0D0D0;line-height:32px;padding:0 10px;margin:20px 0 0}#container{margin:10px;border:1px solid #D0D0D0;box-shadow:0 0 8px #D0D0D0}</style>';
+        echo '<div id="container">'.PHP_EOL;
+        echo '<h1>Restclient Debug</h1>'.PHP_EOL;
+        echo '<div id="body">'.PHP_EOL;
+        echo '<h3>Query Headers</h3>'.PHP_EOL;
+        echo (!empty($this->output_header)) ? r($this->output_header) : 'No headers sent';
+        echo '<h3>Query Datas</h3>'.PHP_EOL;
+        echo (!empty($this->output_value)) ? r($this->output_value) : 'No datas sent';
+        echo '<h3>Query Call</h3>'.PHP_EOL;
+        echo (!empty($this->info)) ? r($this->info).'</pre></code>' : 'Empty call';
+        echo '<h3>Response Code (<font color="'.(($this->http_code > 308) ? 'red' : 'green').'"><b>'.$this->http_code.'</b></font>)</h3>'.PHP_EOL;
+        echo '<h3>Response Headers</h3>'.PHP_EOL;
+        echo (!empty($this->result_header)) ? r($this->result_header) : 'No response headers';
+        echo '<h3>Response Return</h3>'.PHP_EOL;
+        echo (!empty($this->result_value)) ? r($this->result_value) : 'No response value';
+        echo '</div>'.PHP_EOL;
+        echo '</div>'.PHP_EOL;
+
+        // If we got some errors
+        if (!empty($this->error)) {
+            echo '<h3>Errors</h3>'.PHP_EOL;
+            echo '<code>'.PHP_EOL;
+            echo '<strong>Code:</strong> '.$this->errno.'<br/>'.PHP_EOL;
+            echo '<strong>Message:</strong> '.$this->error.'<br/>'.PHP_EOL;
+            echo '</code>'.PHP_EOL;
+        }
+
+        // Get buffered content
+        $contents = ob_get_contents();
+
+        // Flush beffered content
+        ob_end_clean();
+
+        // Kind of output
+        if ($output === true) {
+            return $contents;
+        }
+
+        // Output
+        echo $contents;
+    }
+
+    /**
+     * Clear all global vars
+     * @method clear
+     * @return void
+     */
+    private function clear()
+    {
+        $this->url           = null;
+        $this->curl          = null;
+        $this->info          = array();
+        $this->errno         = null;
+        $this->error         = null;
+        $this->output_value  = array();
+        $this->output_header = array();
+        $this->result_value  = null;
+        $this->result_header = null;
+        $this->http_code     = null;
+        $this->content_type  = null;
+    }
 }
 
 /* End of file Restclient.php */
