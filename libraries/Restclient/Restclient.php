@@ -380,6 +380,7 @@ class Restclient
      * Pretty debug function
      * @method debug
      * @param  boolean $output True will store the debug, False will print it
+     * @SuppressWarnings(PHPMD.DevelopmentCodeFragment)
      * @return string
      */
     public function debug($output = self::OUTPUT_DEBUG)
