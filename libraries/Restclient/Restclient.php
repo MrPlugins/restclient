@@ -387,26 +387,22 @@ class Restclient
         // Starting buffering content
         ob_start();
 
-        // Set debug expand level to 10 by default
-        $dump = new ref();
-        $dump->config('expLvl', 10);
-
         // Load text helper to format code and add css to ouput
         echo '<style type="text/css">body{background-color:#fff;margin:40px;font:13px/20px normal Helvetica,Arial,sans-serif;color:#4F5155}a{color:#039;background-color:transparent;font-weight:400}h1{color:#444;background-color:transparent;border-bottom:1px solid #D0D0D0;font-size:19px;font-weight:400;margin:0 0 14px;padding:14px 15px 10px}code{font-family:Consolas,Monaco,Courier New,Courier,monospace;font-size:12px;background-color:#f9f9f9;border:1px solid #D0D0D0;color:#002166;display:block;margin:14px 0;padding:12px 10px}#body{margin:0 15px}p.footer{text-align:right;font-size:11px;border-top:1px solid #D0D0D0;line-height:32px;padding:0 10px;margin:20px 0 0}#container{margin:10px;border:1px solid #D0D0D0;box-shadow:0 0 8px #D0D0D0}</style>';
         echo '<div id="container">'.PHP_EOL;
         echo '<h1>Restclient Debug</h1>'.PHP_EOL;
         echo '<div id="body">'.PHP_EOL;
         echo '<h3>Query Headers</h3>'.PHP_EOL;
-        echo (!empty($this->output_header)) ? r($this->output_header) : 'No headers sent';
+        echo (!empty($this->output_header)) ? '<pre>'.print_r($this->output_header, true) : 'No headers sent';
         echo '<h3>Query Datas</h3>'.PHP_EOL;
-        echo (!empty($this->output_value)) ? r($this->output_value) : 'No datas sent';
+        echo (!empty($this->output_value)) ? '<pre>'.print_r($this->output_value, true) : 'No datas sent';
         echo '<h3>Query Call</h3>'.PHP_EOL;
-        echo (!empty($this->info)) ? r($this->info).'</pre></code>' : 'Empty call';
+        echo (!empty($this->info)) ? '<pre>'.print_r($this->info, true).'</pre></code>' : 'Empty call';
         echo '<h3>Response Code (<font color="'.(($this->http_code > 308) ? 'red' : 'green').'"><b>'.$this->http_code.'</b></font>)</h3>'.PHP_EOL;
         echo '<h3>Response Headers</h3>'.PHP_EOL;
-        echo (!empty($this->result_header)) ? r($this->result_header) : 'No response headers';
+        echo (!empty($this->result_header)) ? '<pre>'.print_r($this->result_header, true) : 'No response headers';
         echo '<h3>Response Return</h3>'.PHP_EOL;
-        echo (!empty($this->result_value)) ? r($this->result_value) : 'No response value';
+        echo (!empty($this->result_value)) ? '<pre>'.print_r($this->result_value, true) : 'No response value';
         echo '</div>'.PHP_EOL;
         echo '</div>'.PHP_EOL;
 
