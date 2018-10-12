@@ -3,11 +3,6 @@ image: docker:17.06
 stages:
     - test
 
-before_script:
-    - find . -type d -exec chmod 755 {} +
-    - find . -type f -exec chmod 644 {} +
-    - find ./ci -type f -exec chmod 755 {} +
-
 test-codereview:
     stage: test
     environment: testing
@@ -22,6 +17,10 @@ test-codereview:
 test-unitary:
     stage: test
     environment: testing
+    before_script:
+        - find . -type d -exec chmod 755 {} +
+        - find . -type f -exec chmod 644 {} +
+        - find ./ci -type f -exec chmod 755 {} +
     script:
         - cp -pv composer.json test
         - docker run --rm --tty --volume $PWD:/app --workdir /app/test composer:1.4 install --ignore-platform-reqs --no-scripts --no-progress
