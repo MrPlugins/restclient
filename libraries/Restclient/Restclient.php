@@ -92,9 +92,8 @@ class Restclient
      */
     public function __construct(array $config = array())
     {
-
         // Initialise la configuration, si elle existe
-        $this->initialize($config);
+        $this->config = $this->initialize($config);
 
         // Charge l'instance de CodeIgniter
         $this->CI = &get_instance();
@@ -108,10 +107,10 @@ class Restclient
     {
         // Si il y a pas de fichier de configuration
         if (empty($config)) {
-            return;
+            return $this->config;
         }
 
-        $this->config = array_merge($this->config, (isset($config['restclient'])) ? $config['restclient'] : $config);
+        return array_merge($this->config, (isset($config['restclient'])) ? $config['restclient'] : $config);
     }
 
     /**
@@ -282,7 +281,7 @@ class Restclient
     private function _query($method, $url, $data = array(), array $options = array())
     {
         // Initialise la configuration, si elle existe
-        $this->initialize($options);
+        $config = $this->initialize($options);
 
         // Initialisation
         $this->output_header = array();
@@ -293,7 +292,7 @@ class Restclient
         $this->content_type = NULL;
 
         // Si le cache est activé
-        if ($this->config['cache']) {
+        if ($config['cache']) {
             // Parse l'URL
             $url_indo = parse_url($url);
 
@@ -334,12 +333,12 @@ class Restclient
         curl_setopt($curl, CURLOPT_URL, $url);
 
         // Si le port est spécifié
-        if (!empty($this->config['port'])) {
-            curl_setopt($curl, CURLOPT_PORT, $this->config['port']);
+        if (!empty($config['port'])) {
+            curl_setopt($curl, CURLOPT_PORT, $config['port']);
         }
 
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($curl, CURLOPT_TIMEOUT, $this->config['timeout']);
+        curl_setopt($curl, CURLOPT_TIMEOUT, $config['timeout']);
         curl_setopt($curl, CURLOPT_FAILONERROR, FALSE);
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, TRUE);
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, strtoupper($method));
@@ -351,19 +350,19 @@ class Restclient
         curl_setopt($curl, CURLINFO_HEADER_OUT, TRUE);
 
         // Si il y a une authentification
-        if ($this->config['auth']) {
-            switch ($this->config['auth_type']) {
+        if ($config['auth']) {
+            switch ($config['auth_type']) {
                 // Authentification http basic
                 case 'basic':
                     curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-                    curl_setopt($curl, CURLOPT_USERPWD, "{$this->config['auth_username']}:{$this->config['auth_password']}");
+                    curl_setopt($curl, CURLOPT_USERPWD, "{$config['auth_username']}:{$config['auth_password']}");
             }
         }
 
         // Si il y a des headers
-        if (!empty($this->config['header']) && is_array($this->config['header'])) {
+        if (!empty($config['header']) && is_array($config['header'])) {
             // Ajoute les en-têtes
-            foreach ($this->config['header'] as $key => $value) {
+            foreach ($config['header'] as $key => $value) {
                 $this->output_header[] = "$key: $value";
             }
         }
@@ -395,10 +394,10 @@ class Restclient
         curl_setopt($curl, CURLOPT_HTTPHEADER, $this->output_header);
 
         // Si y il a un cookie
-        if (!empty($this->config['cookie']) && is_array($this->config['cookie'])) {
+        if (!empty($config['cookie']) && is_array($config['cookie'])) {
             $cookies = array();
 
-            foreach ($this->config['cookie'] as $key => $value) {
+            foreach ($config['cookie'] as $key => $value) {
                 $cookies[] = "$key=$value";
             }
 
@@ -429,7 +428,7 @@ class Restclient
 
         // Si le contenu est du json
         if (strstr($this->content_type, 'json')) {
-            $result = json_decode($response, $this->config['result_assoc']);
+            $result = json_decode($response, $config['result_assoc']);
 
         // Si autre format
         } else {
@@ -440,7 +439,7 @@ class Restclient
         $this->input_value = & $response;
 
         // Si le cahche est activé et que la méthode est de type GET
-        if ($this->config['cache'] && $method == 'get') {
+        if ($config['cache'] && $method == 'get') {
             // Si la clé existe dans le noeud
             if (!$keys = $this->CI->cache->get($api) OR ! isset($keys[$cache_key])) {
                 // Récupère les clés existantes
@@ -450,11 +449,11 @@ class Restclient
                 $keys[$cache_key] = $cache_key;
 
                 // Sauvegarde les clés
-                $this->CI->cache->save($api, $keys, $this->config['tts']);
+                $this->CI->cache->save($api, $keys, $config['tts']);
             }
 
             // Sauvegarde les données
-            $this->CI->cache->save($cache_key, $result, $this->config['tts']);
+            $this->CI->cache->save($cache_key, $result, $config['tts']);
         }
 
         // Retourne les résultats
