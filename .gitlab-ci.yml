@@ -23,14 +23,14 @@ test-unitary:
     stage: test
     environment: testing
     script:
-        - cp composer.json test
+        - cp -pv composer.json test
         - docker run --rm --tty --volume $PWD:/app --workdir /app/test composer:1.4 install --ignore-platform-reqs --no-scripts --no-progress
-        - cp -r test/vendor/codeigniter/framework/* test
-        - mkdir -p test/vendor/santiane/restclient
-        - mkdir -p test/ci
-        - cp -r ci test
-        - cp -r libraries test/vendor/santiane/restclient
-        - cp -r config test/application
+        - cp -rpv test/vendor/codeigniter/framework/* test
+        - mkdir -pv test/vendor/santiane/restclient
+        - mkdir -pv test/ci
+        - cp -rpv ci test
+        - cp -rpv libraries test/vendor/santiane/restclient
+        - cp -rpv config test/application
         - docker run --rm --tty -e CI_ENV=testing --volume $PWD/test:/app --workdir /app --entrypoint="ci/phpserver_entrypoint.sh" php:7.1-cli sh -c "php index.php test"
     only:
         - testing
