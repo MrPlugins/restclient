@@ -128,7 +128,7 @@ class Restclient
         $this->CI = &get_instance();
 
         // Initialize configuration
-        $this->initialize($config);
+        $this->config = $this->initialize($config);
 
         // Initialize default CURL options
         $this->curl_options = array(
@@ -157,11 +157,11 @@ class Restclient
     {
         // Verification about config file
         if (empty($config)) {
-            show_error('Unable to find Restclient config file', null, 'Restclient Error');
+            return $this->config;
         }
 
         // Append config to library
-        $this->config = array_merge($this->config, (isset($config['restclient'])) ? $config['restclient'] : $config);
+        return array_merge($this->config, (isset($config['restclient'])) ? $config['restclient'] : $config);
     }
 
     /**
