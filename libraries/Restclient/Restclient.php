@@ -26,12 +26,6 @@ class Restclient
     private $url;
 
     /**
-     * CURL ressource
-     * @var object
-     */
-    private $curl;
-
-    /**
      * Informations about request
      * @var array
      */
@@ -406,7 +400,7 @@ class Restclient
      * @param  array    $data
      * @return integer  Headers size
      */
-    private function _headers($curl, $data)
+    public function _headers($curl, $data)
     {
         if (is_resource($curl) && !empty($data)) {
             $this->result_header .= $data;
