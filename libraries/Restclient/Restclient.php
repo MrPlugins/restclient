@@ -13,7 +13,6 @@ class Restclient
      * @var boolean
      */
     const OUTPUT_DEBUG = false;
-
     /**
      * CI Instance
      * @var object
@@ -25,12 +24,6 @@ class Restclient
      * @var string
      */
     private $url;
-
-    /**
-     * CURL ressource
-     * @var object
-     */
-    private $curl;
 
     /**
      * Informations about request
@@ -96,10 +89,16 @@ class Restclient
      * CURL Options
      * @var array
      */
-    private $curl_options = array();
+    private $curl_options;
 
     /**
-     * Configuration
+     * Rollback conf (to delete some additional conf)
+     * @var array
+     */
+    private $curl_options_back;
+
+    /**
+     * Default configuration
      * @var array
      */
     private $config = array(
@@ -118,8 +117,15 @@ class Restclient
     );
 
     /**
+     * Rollback conf (to delete some additional conf)
+     * @var array
+     */
+    private $config_back;
+
+    /**
      * Class Constructor
      * @method __construct
+     * @author Romain GALLIEN <r.gallien@santiane.fr>
      * @param  array       $config
      */
     public function __construct(array $config = array())
@@ -127,10 +133,13 @@ class Restclient
         // Load the CI Instance
         $this->CI = &get_instance();
 
-        // Initialize configuration
-        $this->config = $this->initialize($config);
+        // Store restclient base config to reset calls
+        $this->config_back = $config;
 
-        // Initialize default CURL options
+        // Initialize configuration
+        $this->initialize($config);
+
+        // Define cURL options
         $this->curl_options = array(
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => $this->config['timeout'],
@@ -145,23 +154,29 @@ class Restclient
             CURLINFO_HEADER_OUT    => true,
             CURLOPT_POST           => false
         );
+
+        // Clone it to reset it
+        $this->curl_options_back = $this->curl_options;
     }
 
     /**
      * Initialize function
      * @method initialize
      * @param  array      $config Config to assert
+     * @author Romain GALLIEN <r.gallien@santiane.fr>
      * @return void
      */
     public function initialize(array $config = array())
     {
-        // Verification about config file
-        if (empty($config)) {
-            return $this->config;
+        // Append extra config
+        if (!empty($config)) {
+            foreach ($config as $conf_key => $conf_value) {
+                (!isset($this->config[$conf_key])) or $this->config[$conf_key] = $conf_value;
+            }
         }
 
-        // Append config to library
-        return array_merge($this->config, (isset($config['restclient'])) ? $config['restclient'] : $config);
+        // Return object
+        return $this;
     }
 
     /**
@@ -172,8 +187,11 @@ class Restclient
      */
     public function __call($http_method = 'post', array $arguments = array())
     {
+        // If we got additionnal options from call we initialize the lib with, or just reset with file conf
+        $config = (!empty($arguments[2]) && is_array($arguments[2])) ? $arguments[2] : $this->config_back;
+
         // Clear all previous datas to avoid errors or mismatch
-        $this->clear();
+        $this->initialize($config);
 
         // Security to check if method is valid
         if (!in_array(strtolower($http_method), $this->config['methods'])) {
@@ -194,11 +212,6 @@ class Restclient
 
         // Define DATAS sent
         $this->output_value = $arguments[1];
-
-        // If we got additionnal options we initialize the lib with
-        if (!empty($arguments[2]) && is_array($arguments[2])) {
-            $this->initialize($arguments[2]);
-        }
 
         // Execute request and run the output
         return $this->_query();
@@ -310,6 +323,9 @@ class Restclient
         // Close the CURL session
         curl_close($curl);
 
+        // Reset cURL options
+        $this->curl_options = $this->curl_options_back;
+
         // Return
         return $response;
     }
@@ -358,6 +374,23 @@ class Restclient
     public function http_code()
     {
         return $this->http_code;
+    }
+
+    /**
+     * Allow user to specify some CURL options
+     * @method set_curl_options
+     * @author Romain GALLIEN <r.gallien@santiane.fr>
+     * @param  array            $options Array of CURL options
+     */
+    public function set_curl_options(array $options = array())
+    {
+        if (!empty($options)) {
+            foreach ($options as $option_key => $option_value) {
+                if (array_key_exists($option_key, $this->curl_options)) {
+                    $this->curl_options[$option_key] = $option_value;
+                }
+            }
+        }
     }
 
     /**
@@ -429,26 +462,6 @@ class Restclient
 
         // Output
         echo $contents;
-    }
-
-    /**
-     * Clear all global vars
-     * @method clear
-     * @return void
-     */
-    private function clear()
-    {
-        $this->url           = null;
-        $this->curl          = null;
-        $this->info          = array();
-        $this->errno         = null;
-        $this->error         = null;
-        $this->output_value  = array();
-        $this->output_header = array();
-        $this->result_value  = null;
-        $this->result_header = null;
-        $this->http_code     = null;
-        $this->content_type  = null;
     }
 }
 
